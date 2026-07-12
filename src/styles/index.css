@@ -151,8 +151,7 @@ button { cursor: pointer; }
 
 /* ── Workspace layout ────────────────────────────────────────── */
 .workspace {
-  display: grid;
-  grid-template-columns: 68px 1fr 340px;
+  display: flex;
   width: 100%;
   height: calc(100vh - 56px);
   min-height: 0;
@@ -161,6 +160,8 @@ button { cursor: pointer; }
 
 /* ── Tool sidebar ────────────────────────────────────────────── */
 .tools {
+  width: 68px;
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -169,6 +170,82 @@ button { cursor: pointer; }
   border-right: 1px solid var(--line);
   background: var(--panel);
   overflow-y: auto;
+}
+
+/* ── Shapes Library Sidebar (Desktop) ── */
+.shapes-library {
+  width: 240px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--line);
+  background: var(--panel);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  animation: slideInLeft 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+@keyframes slideInLeft {
+  from { transform: translateX(-15px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+.shapes-lib-head {
+  padding: 14px;
+  border-bottom: 1px solid var(--line);
+}
+.shapes-lib-head strong {
+  font-size: 13px;
+  font-weight: 850;
+  color: var(--ink);
+  display: block;
+}
+.shapes-lib-head p {
+  margin: 3px 0 0;
+  font-size: 10px;
+  color: var(--muted);
+  font-weight: 600;
+}
+.shapes-lib-grid {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.shape-lib-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 4px;
+  border: 1.5px solid var(--line);
+  border-radius: 8px;
+  background: white;
+  transition: all 0.12s ease;
+  cursor: pointer;
+  gap: 4px;
+}
+.shape-lib-btn:hover {
+  border-color: var(--orange);
+  background: rgba(255, 92, 53, 0.04);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(255, 92, 53, 0.08);
+}
+.shape-lib-btn:active {
+  transform: translateY(0);
+}
+.shape-lib-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+.shape-lib-label {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--muted);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
 }
 
 .tool-btn {
@@ -1483,6 +1560,58 @@ code { display: block; }
     left: auto !important;
     top: auto !important;
     box-shadow: none !important;
+  }
+
+  /* Shapes Library Mobile Strip (horizontal scrollable bar) */
+  .shapes-library {
+    order: 1.5 !important; /* sit above bottom tool-bar */
+    width: 100% !important;
+    height: 80px !important;
+    border-right: 0 !important;
+    border-top: 1px solid var(--line) !important;
+    background: var(--panel) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 6px 12px 4px !important;
+    gap: 4px !important;
+  }
+  .shapes-lib-head {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 0 4px !important;
+    border-bottom: 0 !important;
+  }
+  .shapes-lib-head strong {
+    font-size: 10px !important;
+  }
+  .shapes-lib-head p {
+    font-size: 8px !important;
+    margin: 0 !important;
+  }
+  .shapes-lib-grid {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    gap: 8px !important;
+    padding: 2px 4px !important;
+  }
+  .shape-lib-btn {
+    flex: 0 0 62px !important; /* fixed size so it slides horizontally */
+    height: 44px !important;
+    padding: 4px 2px !important;
+    border-radius: 6px !important;
+    font-size: 9px !important;
+    border: 1.5px solid var(--line) !important;
+  }
+  .shape-lib-icon {
+    font-size: 16px !important;
+  }
+  .shape-lib-label {
+    font-size: 8px !important;
   }
 
   /* Control bar: horizontal scrolling */

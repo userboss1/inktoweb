@@ -12,6 +12,7 @@ import {
   clonePoints,
   sameFrame,
   pointsAtProgress,
+  getPredefinedShape,
 } from '../utils/drawingHelpers';
 
 // SVG icons as inline components
@@ -225,6 +226,40 @@ function SequencePanel({ open, onClose, animatedItems, totalDuration, playingPre
   );
 }
 
+// ── Predefined Shapes Metadata (30 Shapes) ───────────────────────────────────
+const SHAPES_LIST = [
+  { id: 'rect', name: 'Rectangle', icon: '⬜' },
+  { id: 'circle', name: 'Circle', icon: '⭕' },
+  { id: 'triangle', name: 'Triangle', icon: '🔺' },
+  { id: 'right_triangle', name: 'Right Tri', icon: '📐' },
+  { id: 'pentagon', name: 'Pentagon', icon: '⬠' },
+  { id: 'hexagon', name: 'Hexagon', icon: '⬢' },
+  { id: 'star_5', name: '5-Pt Star', icon: '⭐' },
+  { id: 'star_4', name: '4-Pt Star', icon: '✦' },
+  { id: 'star_8', name: '8-Pt Star', icon: '✴️' },
+  { id: 'arrow_right', name: 'Arrow R', icon: '➡️' },
+  { id: 'arrow_left', name: 'Arrow L', icon: '⬅️' },
+  { id: 'arrow_up', name: 'Arrow U', icon: '⬆️' },
+  { id: 'arrow_down', name: 'Arrow D', icon: '⬇️' },
+  { id: 'bent_arrow_right', name: 'Bent R', icon: '↪️' },
+  { id: 'bent_arrow_left', name: 'Bent L', icon: '↩️' },
+  { id: 'curved_line', name: 'Curve', icon: '〰️' },
+  { id: 'heart', name: 'Heart', icon: '❤️' },
+  { id: 'diamond', name: 'Diamond', icon: '🔷' },
+  { id: 'cross', name: 'Plus Sign', icon: '➕' },
+  { id: 'speech_bubble', name: 'Bubble', icon: '💬' },
+  { id: 'lightning', name: 'Lightning', icon: '⚡' },
+  { id: 'moon', name: 'Moon', icon: '🌙' },
+  { id: 'cloud', name: 'Cloud', icon: '☁️' },
+  { id: 'gear', name: 'Gear', icon: '⚙️' },
+  { id: 'infinity', name: 'Infinity', icon: '♾️' },
+  { id: 'cylinder', name: 'Cylinder', icon: '🛢️' },
+  { id: 'checkmark', name: 'Check', icon: '✔️' },
+  { id: 'ribbon', name: 'Ribbon', icon: '🎗️' },
+  { id: 'cross_x', name: 'Cross X', icon: '✖️' },
+  { id: 'trapezoid', name: 'Trapezoid', icon: '⏢' },
+];
+
 // ── Main Component ────────────────────────────────────────────────────────────
 export default function Editor() {
   const {
@@ -403,7 +438,8 @@ export default function Editor() {
   const capturePosition = (notify = true) => {
     if (!recording || !paths[recording.index]) return false;
     const frame = clonePoints(paths[recording.index].points);
-    if (sameFrame(frame, recording.keyframes.at(-1))) {
+    // Fixed: recording.keyframes.at(-1) breaks older Android/Lenovo tablet browsers
+    if (sameFrame(frame, recording.keyframes[recording.keyframes.length - 1])) {
       if (notify) showToast('Move or rotate the object first');
       return false;
     }
@@ -420,7 +456,8 @@ export default function Editor() {
     // immediately read recording.keyframes, because setRecording is async (stale closure).
     const currentFrame = paths[recording.index] ? clonePoints(paths[recording.index].points) : null;
     const frames = [...recording.keyframes.map(clonePoints)];
-    if (currentFrame && !sameFrame(currentFrame, frames.at(-1))) {
+    // Fixed: frames.at(-1) breaks older Android/Lenovo tablet browsers
+    if (currentFrame && !sameFrame(currentFrame, frames[frames.length - 1])) {
       frames.push(currentFrame);
     }
     if (frames.length < 2) { showToast('Move the object and add a position first'); return; }
@@ -471,7 +508,8 @@ export default function Editor() {
     // stale state and lose the last captured frame.
     const currentFrame = paths[recording.index] ? clonePoints(paths[recording.index].points) : null;
     const finalKeyframes = [...recording.keyframes];
-    if (currentFrame && !sameFrame(currentFrame, finalKeyframes.at(-1))) {
+    // Fixed: finalKeyframes.at(-1) breaks older Android/Lenovo tablet browsers
+    if (currentFrame && !sameFrame(currentFrame, finalKeyframes[finalKeyframes.length - 1])) {
       finalKeyframes.push(currentFrame);
     }
 
@@ -595,6 +633,20 @@ export default function Editor() {
   };
 
   // ── Export ───────────────────────────────────────────────────────────────────
+  const insertPredefinedShape = (type) => {
+    const pts = getPredefinedShape(type, 480, 300, 140);
+    if (!pts?.length) return;
+    addPath({
+      points: pts,
+      color: strokeColor,
+      width: +strokeWidth,
+      closed: type !== 'curved_line' && type !== 'checkmark',
+      fill: type !== 'curved_line' && type !== 'checkmark' && fillToggle,
+      fillColor,
+    });
+    showToast(`Inserted ${type.replaceAll('_', ' ')}`);
+  };
+
   const downloadHtml = () => {
     const blob = new Blob([htmlMarkup(paths)], { type: 'text/html' });
     const a = document.createElement('a');
@@ -703,6 +755,29 @@ export default function Editor() {
             <span className="tool-label">Redo</span>
           </button>
         </aside>
+
+        {/* ── Shapes Library Sidebar (only visible when Shape tool is active) ── */}
+        {tool === 'shape' && (
+          <aside className="shapes-library" aria-label="Shape library">
+            <div className="shapes-lib-head">
+              <strong>Shape Library</strong>
+              <p>Insert or draw freehand</p>
+            </div>
+            <div className="shapes-lib-grid">
+              {SHAPES_LIST.map(sh => (
+                <button
+                  key={sh.id}
+                  className="shape-lib-btn"
+                  onClick={() => insertPredefinedShape(sh.id)}
+                  title={sh.name}
+                >
+                  <span className="shape-lib-icon">{sh.icon}</span>
+                  <span className="shape-lib-label">{sh.name}</span>
+                </button>
+              ))}
+            </div>
+          </aside>
+        )}
 
         {/* ── Stage ── */}
         <section className="stage-panel">

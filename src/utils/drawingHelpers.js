@@ -39,7 +39,7 @@ export function pathData(list, closed = false) {
     const my = ((list[i].y + list[i + 1].y) / 2).toFixed(1);
     d += ` Q ${list[i].x} ${list[i].y} ${mx} ${my}`;
   }
-  const l = list.at(-1);
+  const l = list[list.length - 1]; // Fixed: list.at(-1) breaks older Android/Lenovo tablet browsers
   d += ` L ${l.x} ${l.y}`;
   return closed ? `${d} Z` : d;
 }
@@ -83,6 +83,377 @@ export function pointsAtProgress(item, progress) {
     const y = p.y - m.fromCenter.y;
     return { x: cx + x * cos - y * sin, y: cy + x * sin + y * cos };
   });
+}
+
+// ─── Predefined Shape Library Math (30 Shapes) ────────────────────────────────
+
+export function getPredefinedShape(type, cx = 480, cy = 300, size = 120) {
+  const r = size / 2;
+  const t = size / 6;
+
+  switch (type) {
+    case 'rect':
+      return [
+        { x: cx - r, y: cy - r },
+        { x: cx + r, y: cy - r },
+        { x: cx + r, y: cy + r },
+        { x: cx - r, y: cy + r },
+        { x: cx - r, y: cy - r }
+      ];
+
+    case 'circle': {
+      const pts = [];
+      const steps = 24;
+      for (let i = 0; i <= steps; i++) {
+        const rad = (i * 2 * Math.PI) / steps;
+        pts.push({ x: Math.round(cx + Math.cos(rad) * r), y: Math.round(cy + Math.sin(rad) * r) });
+      }
+      return pts;
+    }
+
+    case 'triangle':
+      return [
+        { x: cx, y: cy - r },
+        { x: cx + r, y: cy + r },
+        { x: cx - r, y: cy + r },
+        { x: cx, y: cy - r }
+      ];
+
+    case 'right_triangle':
+      return [
+        { x: cx - r, y: cy - r },
+        { x: cx + r, y: cy + r },
+        { x: cx - r, y: cy + r },
+        { x: cx - r, y: cy - r }
+      ];
+
+    case 'pentagon': {
+      const pts = [];
+      for (let i = 0; i < 5; i++) {
+        const rad = (i * 2 * Math.PI) / 5 - Math.PI / 2;
+        pts.push({ x: Math.round(cx + Math.cos(rad) * r), y: Math.round(cy + Math.sin(rad) * r) });
+      }
+      pts.push({ ...pts[0] });
+      return pts;
+    }
+
+    case 'hexagon': {
+      const pts = [];
+      for (let i = 0; i < 6; i++) {
+        const rad = (i * 2 * Math.PI) / 6 - Math.PI / 2;
+        pts.push({ x: Math.round(cx + Math.cos(rad) * r), y: Math.round(cy + Math.sin(rad) * r) });
+      }
+      pts.push({ ...pts[0] });
+      return pts;
+    }
+
+    case 'star_5': {
+      const pts = [];
+      for (let i = 0; i < 10; i++) {
+        const radDist = i % 2 === 0 ? r : r * 0.4;
+        const rad = (i * Math.PI) / 5 - Math.PI / 2;
+        pts.push({ x: Math.round(cx + Math.cos(rad) * radDist), y: Math.round(cy + Math.sin(rad) * radDist) });
+      }
+      pts.push({ ...pts[0] });
+      return pts;
+    }
+
+    case 'star_4': {
+      const pts = [];
+      for (let i = 0; i < 8; i++) {
+        const radDist = i % 2 === 0 ? r : r * 0.35;
+        const rad = (i * Math.PI) / 4 - Math.PI / 2;
+        pts.push({ x: Math.round(cx + Math.cos(rad) * radDist), y: Math.round(cy + Math.sin(rad) * radDist) });
+      }
+      pts.push({ ...pts[0] });
+      return pts;
+    }
+
+    case 'star_8': {
+      const pts = [];
+      for (let i = 0; i < 16; i++) {
+        const radDist = i % 2 === 0 ? r : r * 0.5;
+        const rad = (i * Math.PI) / 8 - Math.PI / 2;
+        pts.push({ x: Math.round(cx + Math.cos(rad) * radDist), y: Math.round(cy + Math.sin(rad) * radDist) });
+      }
+      pts.push({ ...pts[0] });
+      return pts;
+    }
+
+    case 'arrow_right':
+      return [
+        { x: cx - r, y: cy - r / 3 },
+        { x: cx + r * 0.3, y: cy - r / 3 },
+        { x: cx + r * 0.3, y: cy - r * 0.8 },
+        { x: cx + r, y: cy },
+        { x: cx + r * 0.3, y: cy + r * 0.8 },
+        { x: cx + r * 0.3, y: cy + r / 3 },
+        { x: cx - r, y: cy + r / 3 },
+        { x: cx - r, y: cy - r / 3 }
+      ];
+
+    case 'arrow_left':
+      return [
+        { x: cx + r, y: cy - r / 3 },
+        { x: cx - r * 0.3, y: cy - r / 3 },
+        { x: cx - r * 0.3, y: cy - r * 0.8 },
+        { x: cx - r, y: cy },
+        { x: cx - r * 0.3, y: cy + r * 0.8 },
+        { x: cx - r * 0.3, y: cy + r / 3 },
+        { x: cx + r, y: cy + r / 3 },
+        { x: cx + r, y: cy - r / 3 }
+      ];
+
+    case 'arrow_up':
+      return [
+        { x: cx - r / 3, y: cy + r },
+        { x: cx - r / 3, y: cy - r * 0.3 },
+        { x: cx - r * 0.8, y: cy - r * 0.3 },
+        { x: cx, y: cy - r },
+        { x: cx + r * 0.8, y: cy - r * 0.3 },
+        { x: cx + r / 3, y: cy - r * 0.3 },
+        { x: cx + r / 3, y: cy + r },
+        { x: cx - r / 3, y: cy + r }
+      ];
+
+    case 'arrow_down':
+      return [
+        { x: cx - r / 3, y: cy - r },
+        { x: cx - r / 3, y: cy + r * 0.3 },
+        { x: cx - r * 0.8, y: cy + r * 0.3 },
+        { x: cx, y: cy + r },
+        { x: cx + r * 0.8, y: cy + r * 0.3 },
+        { x: cx + r / 3, y: cy + r * 0.3 },
+        { x: cx + r / 3, y: cy - r },
+        { x: cx - r / 3, y: cy - r }
+      ];
+
+    case 'bent_arrow_right':
+      return [
+        { x: cx - r, y: cy + r },
+        { x: cx - r, y: cy - r * 0.3 },
+        { x: cx + r * 0.2, y: cy - r * 0.3 },
+        { x: cx + r * 0.2, y: cy - r * 0.8 },
+        { x: cx + r, y: cy - r * 0.05 },
+        { x: cx + r * 0.2, y: cy + r * 0.7 },
+        { x: cx + r * 0.2, y: cy + r * 0.2 },
+        { x: cx - r * 0.4, y: cy + r * 0.2 },
+        { x: cx - r * 0.4, y: cy + r },
+        { x: cx - r, y: cy + r }
+      ];
+
+    case 'bent_arrow_left':
+      return [
+        { x: cx + r, y: cy + r },
+        { x: cx + r, y: cy - r * 0.3 },
+        { x: cx - r * 0.2, y: cy - r * 0.3 },
+        { x: cx - r * 0.2, y: cy - r * 0.8 },
+        { x: cx - r, y: cy - r * 0.05 },
+        { x: cx - r * 0.2, y: cy + r * 0.7 },
+        { x: cx - r * 0.2, y: cy + r * 0.2 },
+        { x: cx + r * 0.4, y: cy + r * 0.2 },
+        { x: cx + r * 0.4, y: cy + r },
+        { x: cx + r, y: cy + r }
+      ];
+
+    case 'curved_line': {
+      const pts = [];
+      const steps = 18;
+      for (let i = 0; i <= steps; i++) {
+        const progress = i / steps;
+        const x = cx - r + progress * size;
+        const y = cy + Math.sin(progress * 2.5 * Math.PI) * (r * 0.5);
+        pts.push({ x: Math.round(x), y: Math.round(y) });
+      }
+      return pts;
+    }
+
+    case 'heart': {
+      const pts = [];
+      const steps = 30;
+      for (let i = 0; i <= steps; i++) {
+        const angle = (i / steps) * 2 * Math.PI;
+        const xt = 16 * Math.pow(Math.sin(angle), 3);
+        const yt = 13 * Math.cos(angle) - 5 * Math.cos(2 * angle) - 2 * Math.cos(3 * angle) - Math.cos(4 * angle);
+        const scale = size / 34;
+        pts.push({ x: Math.round(cx + xt * scale), y: Math.round(cy - yt * scale) });
+      }
+      pts.push({ ...pts[0] });
+      return pts;
+    }
+
+    case 'diamond':
+      return [
+        { x: cx, y: cy - r },
+        { x: cx + r, y: cy },
+        { x: cx, y: cy + r },
+        { x: cx - r, y: cy },
+        { x: cx, y: cy - r }
+      ];
+
+    case 'cross':
+      return [
+        { x: cx - t, y: cy - r },
+        { x: cx + t, y: cy - r },
+        { x: cx + t, y: cy - t },
+        { x: cx + r, y: cy - t },
+        { x: cx + r, y: cy + t },
+        { x: cx + t, y: cy + t },
+        { x: cx + t, y: cy + r },
+        { x: cx - t, y: cy + r },
+        { x: cx - t, y: cy + t },
+        { x: cx - r, y: cy + t },
+        { x: cx - r, y: cy - t },
+        { x: cx - t, y: cy - t },
+        { x: cx - t, y: cy - r }
+      ];
+
+    case 'speech_bubble': {
+      const pts = [];
+      const steps = 24;
+      const rx = r * 1.1;
+      const ry = r * 0.75;
+      for (let i = 0; i < steps; i++) {
+        const angle = (i * 2 * Math.PI) / steps;
+        if (i === 17) {
+          pts.push({ x: Math.round(cx - rx * 0.4), y: Math.round(cy + ry * 0.8) });
+          pts.push({ x: Math.round(cx - rx * 0.7), y: Math.round(cy + ry * 1.4) });
+          pts.push({ x: Math.round(cx - rx * 0.1), y: Math.round(cy + ry * 0.95) });
+        } else {
+          pts.push({ x: Math.round(cx + Math.cos(angle) * rx), y: Math.round(cy + Math.sin(angle) * ry) });
+        }
+      }
+      pts.push({ ...pts[0] });
+      return pts;
+    }
+
+    case 'lightning':
+      return [
+        { x: cx + r * 0.25, y: cy - r },
+        { x: cx - r * 0.5, y: cy + r * 0.1 },
+        { x: cx - r * 0.1, y: cy + r * 0.1 },
+        { x: cx - r * 0.35, y: cy + r },
+        { x: cx + r * 0.5, y: cy - r * 0.1 },
+        { x: cx + r * 0.1, y: cy - r * 0.1 },
+        { x: cx + r * 0.25, y: cy - r }
+      ];
+
+    case 'moon': {
+      const pts = [];
+      const steps = 16;
+      for (let i = 0; i <= steps; i++) {
+        const rad = -Math.PI / 2 + (i * Math.PI) / steps;
+        pts.push({ x: Math.round(cx + Math.cos(rad) * r), y: Math.round(cy + Math.sin(rad) * r) });
+      }
+      for (let i = steps; i >= 0; i--) {
+        const rad = -Math.PI / 2 + (i * Math.PI) / steps;
+        pts.push({ x: Math.round(cx + Math.cos(rad) * r * 0.65 + r * 0.35), y: Math.round(cy + Math.sin(rad) * r) });
+      }
+      pts.push({ ...pts[0] });
+      return pts;
+    }
+
+    case 'cloud': {
+      const pts = [];
+      const steps = 28;
+      for (let i = 0; i <= steps; i++) {
+        const angle = (i * 2 * Math.PI) / steps;
+        const hump = 1 + 0.14 * Math.abs(Math.sin(3.5 * angle));
+        pts.push({
+          x: Math.round(cx + Math.cos(angle) * r * hump),
+          y: Math.round(cy + Math.sin(angle) * r * 0.68 * hump)
+        });
+      }
+      return pts;
+    }
+
+    case 'gear': {
+      const pts = [];
+      const teeth = 8;
+      const rOut = r;
+      const rIn = r * 0.72;
+      for (let i = 0; i < teeth * 4; i++) {
+        const angle = (i * 2 * Math.PI) / (teeth * 4);
+        const isOuter = (i % 4 === 0 || i % 4 === 1);
+        const curR = isOuter ? rOut : rIn;
+        pts.push({ x: Math.round(cx + Math.cos(angle) * curR), y: Math.round(cy + Math.sin(angle) * curR) });
+      }
+      pts.push({ ...pts[0] });
+      return pts;
+    }
+
+    case 'infinity': {
+      const pts = [];
+      const steps = 30;
+      for (let i = 0; i <= steps; i++) {
+        const tVal = (i / steps) * 2 * Math.PI - Math.PI;
+        const denom = 1 + Math.pow(Math.sin(tVal), 2);
+        const scale = r * 1.3;
+        const x = (scale * Math.cos(tVal)) / denom;
+        const y = (scale * Math.sin(tVal) * Math.cos(tVal)) / denom;
+        pts.push({ x: Math.round(cx + x), y: Math.round(cy + y) });
+      }
+      return pts;
+    }
+
+    case 'cylinder':
+      return [
+        { x: cx - r, y: cy - r * 0.7 },
+        { x: cx + r, y: cy - r * 0.7 },
+        { x: cx + r, y: cy + r * 0.7 },
+        { x: cx - r, y: cy + r * 0.7 },
+        { x: cx - r, y: cy - r * 0.7 },
+        { x: cx + r, y: cy - r * 0.7 },
+        { x: cx + r, y: cy - r * 0.45 },
+        { x: cx - r, y: cy - r * 0.45 }
+      ];
+
+    case 'checkmark':
+      return [
+        { x: cx - r, y: cy + r * 0.1 },
+        { x: cx - r * 0.2, y: cy + r * 0.9 },
+        { x: cx + r, y: cy - r * 0.8 }
+      ];
+
+    case 'ribbon':
+      return [
+        { x: cx - r, y: cy - r * 0.6 },
+        { x: cx + r, y: cy - r * 0.6 },
+        { x: cx + r * 0.8, y: cy },
+        { x: cx + r, y: cy + r * 0.6 },
+        { x: cx - r, y: cy + r * 0.6 },
+        { x: cx - r * 0.8, y: cy },
+        { x: cx - r, y: cy - r * 0.6 }
+      ];
+
+    case 'cross_x':
+      return [
+        { x: cx - r, y: cy - r + t },
+        { x: cx - r + t, y: cy - r },
+        { x: cx, y: cy - t },
+        { x: cx + r - t, y: cy - r },
+        { x: cx + r, y: cy - r + t },
+        { x: cx + t, y: cy },
+        { x: cx + r, y: cy + r - t },
+        { x: cx + r - t, y: cy + r },
+        { x: cx, y: cy + t },
+        { x: cx - r + t, y: cy + r },
+        { x: cx - r, y: cy + r - t },
+        { x: cx - t, y: cy }
+      ];
+
+    case 'trapezoid':
+      return [
+        { x: cx - r * 0.65, y: cy - r },
+        { x: cx + r * 0.65, y: cy - r },
+        { x: cx + r, y: cy + r },
+        { x: cx - r, y: cy + r },
+        { x: cx - r * 0.65, y: cy - r }
+      ];
+
+    default:
+      return [];
+  }
 }
 
 // ─── Code / HTML generation ───────────────────────────────────────────────────
