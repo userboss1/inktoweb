@@ -23,12 +23,23 @@
 
 /* ── Base ────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; }
-html, body { height: 100%; margin: 0; overflow: hidden; }
+html {
+  scroll-behavior: smooth;
+}
 body {
+  margin: 0;
+  padding: 0;
   font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
   color: var(--ink);
   background: var(--paper);
   -webkit-font-smoothing: antialiased;
+}
+.editor-page-container {
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 button, input, select { font: inherit; color: inherit; }
 button { cursor: pointer; }
@@ -1177,12 +1188,14 @@ code { display: block; }
 .home-blob {
   position: absolute;
   border-radius: 50%;
-  filter: blur(80px);
-  opacity: .35;
+  opacity: 0.18;
+  pointer-events: none;
+  /* Use radial gradient instead of blur filters to achieve 60fps scrolling on mobile GPUs */
+  background: radial-gradient(circle, currentColor 0%, transparent 70%);
 }
-.home-blob-1 { width: 500px; height: 500px; background: #ff5c35; top: -100px; right: -120px; }
-.home-blob-2 { width: 400px; height: 400px; background: #705aef; bottom: 100px; left: -100px; }
-.home-blob-3 { width: 300px; height: 300px; background: #28c96f; top: 40%; right: 25%; }
+.home-blob-1 { width: 600px; height: 600px; color: #ff5c35; top: -150px; right: -150px; }
+.home-blob-2 { width: 500px; height: 500px; color: #705aef; bottom: 50px; left: -120px; }
+.home-blob-3 { width: 350px; height: 350px; color: #28c96f; top: 35%; right: 20%; }
 .home-grid {
   position: absolute;
   inset: 0;
@@ -1314,7 +1327,8 @@ code { display: block; }
 /* ── Responsive ──────────────────────────────────────────────── */
 
 /* Mobile view toggle (hidden on desktop) */
-.mobile-tabs-toggle {
+/* Mobile bottom tab bar styles (hidden on desktop) */
+.mobile-nav-tabs {
   display: none;
 }
 
@@ -1347,44 +1361,116 @@ code { display: block; }
     display: none !important; /* Hide less critical desktop options */
   }
 
-  /* Segmented tab toggle styling */
-  .mobile-tabs-toggle {
-    display: flex;
-    background: #e5e0d6;
-    border-radius: 8px;
-    padding: 2px;
-    gap: 2px;
-    margin: 0 auto 0 8px;
+  /* Bottom Navigation Tab Bar (visible on mobile/tablet) */
+  .mobile-nav-tabs {
+    display: flex !important;
+    order: 3 !important;
+    width: 100% !important;
+    height: 56px !important;
+    background: #111010;
+    border-top: 1px solid #222020;
+    align-items: center;
+    justify-content: space-around;
+    z-index: 10;
   }
-  .mobile-tab-btn {
+  .mobile-tab-item {
+    flex: 1;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
     border: 0;
     background: transparent;
-    padding: 6px 12px;
-    font-size: 11px;
-    font-weight: 700;
-    border-radius: 6px;
-    color: var(--muted);
-    transition: all .1s ease;
+    color: #888782;
     cursor: pointer;
+    transition: all .15s ease;
+    padding: 4px 0;
   }
-  .mobile-tab-btn.active {
-    background: white;
-    color: var(--ink);
-    box-shadow: 0 1px 3px rgba(0,0,0,.1);
+  .mobile-tab-item.active {
+    color: #ff5c35; /* Active color matching orange theme */
+  }
+  .mobile-tab-item .tab-icon {
+    font-size: 18px;
+    line-height: 1;
+  }
+  .mobile-tab-item .tab-text {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: .02em;
   }
 
   /* Tab-based workspace swapping */
   .workspace {
     display: flex !important;
     flex-direction: column !important;
-    height: calc(100vh - 56px) !important;
+    height: calc(100vh - 112px) !important; /* subtract header and bottom tab heights */
     grid-template-columns: none !important;
   }
 
-  /* Toggle views: Canvas mode vs Code mode */
-  .workspace.show-canvas .code-panel {
+  /* Hide elements based on selected tab mode */
+  
+  /* DRAW MODE */
+  .workspace.show-draw .code-panel {
     display: none !important;
   }
+  .workspace.show-draw .tools {
+    order: 2 !important;
+    display: flex !important;
+    flex-direction: row !important;
+    width: 100% !important;
+    height: 58px !important;
+    padding: 6px 12px !important;
+    border-right: 0 !important;
+    border-top: 1px solid var(--line) !important;
+    justify-content: space-around !important;
+    align-items: center !important;
+    background: var(--panel) !important;
+  }
+  .workspace.show-draw .tools .tool-btn {
+    flex: 1 !important;
+    max-width: 60px !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    padding: 2px !important;
+    border-radius: 8px !important;
+  }
+  .workspace.show-draw .tools .tool-divider {
+    width: 1px !important;
+    height: 24px !important;
+    margin: 0 8px !important;
+  }
+  .workspace.show-draw .stage-panel {
+    flex: 1 !important;
+    order: 1 !important;
+    display: grid !important;
+    grid-template-rows: auto 1fr 28px !important;
+    height: auto !important;
+    padding-bottom: 0 !important;
+  }
+
+  /* ANIMATE MODE */
+  .workspace.show-animate .code-panel,
+  .workspace.show-animate .tools {
+    display: none !important;
+  }
+  .workspace.show-animate .stage-panel {
+    flex: 1 !important;
+    display: grid !important;
+    grid-template-rows: auto 1fr 28px !important;
+    height: auto !important;
+    padding-bottom: 0 !important;
+  }
+
+  /* TIMELINE MODE */
+  .workspace.show-timeline .code-panel,
+  .workspace.show-timeline .tools,
+  .workspace.show-timeline .stage-panel {
+    display: none !important;
+  }
+
+  /* CODE MODE */
   .workspace.show-code .tools,
   .workspace.show-code .stage-panel {
     display: none !important;
@@ -1397,43 +1483,6 @@ code { display: block; }
     left: auto !important;
     top: auto !important;
     box-shadow: none !important;
-  }
-
-  /* Tools layout: sit as a horizontal bar at the bottom in canvas mode */
-  .workspace.show-canvas .tools {
-    order: 2 !important;
-    flex-direction: row !important;
-    width: 100% !important;
-    height: 58px !important;
-    padding: 6px 12px !important;
-    border-right: 0 !important;
-    border-top: 1px solid var(--line) !important;
-    justify-content: space-around !important;
-    align-items: center !important;
-    background: var(--panel) !important;
-  }
-  .workspace.show-canvas .tools .tool-btn {
-    flex: 1 !important;
-    max-width: 60px !important;
-    height: 44px !important;
-    min-height: 44px !important;
-    padding: 2px !important;
-    border-radius: 8px !important;
-  }
-  .workspace.show-canvas .tools .tool-divider {
-    width: 1px !important;
-    height: 24px !important;
-    margin: 0 8px !important;
-  }
-
-  /* Stage layout: fills remaining space above the tool-bar */
-  .stage-panel {
-    flex: 1 !important;
-    order: 1 !important;
-    display: grid !important;
-    grid-template-rows: auto 1fr 28px !important;
-    height: auto !important;
-    padding-bottom: 0 !important;
   }
 
   /* Control bar: horizontal scrolling */
@@ -1518,9 +1567,9 @@ code { display: block; }
   /* Bottom sheet recording bar on mobile */
   .anim-panel {
     width: 100% !important;
-    bottom: 0 !important;
+    bottom: 56px !important; /* Sit just above the bottom navigation tab bar */
     left: 0 !important;
-    transform: translateX(0) translateY(100%) !important;
+    transform: translateX(0) translateY(120%) !important;
     border-radius: 0 !important;
     border-left: 0 !important;
     border-right: 0 !important;

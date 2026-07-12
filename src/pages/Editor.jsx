@@ -254,7 +254,7 @@ export default function Editor() {
   const [playingPreview, setPlayingPreview] = useState(false);
   const [seqOpen, setSeqOpen] = useState(false);
   const [coordText, setCoordText] = useState('x 0 / y 0');
-  const [mobileTab, setMobileTab] = useState('canvas'); // 'canvas' | 'code'
+  const [mobileTab, setMobileTab] = useState('draw'); // 'draw' | 'animate' | 'timeline' | 'code'
 
   // ── Pointer events ──────────────────────────────────────────────────────────
   const onPointerDown = useCallback((e) => {
@@ -647,33 +647,13 @@ export default function Editor() {
 
   // ─────────────────────────────────────────────────────────────────────────────
   return (
-    <>
+    <div className="editor-page-container">
       {/* ── Header ── */}
       <header className="topbar">
         <a className="brand" href="#" aria-label="InkToWeb">
           <span className="brand-mark">↝</span>
           <span className="brand-title-text">InkToWeb</span>
         </a>
-
-        {/* Segmented Tab Toggler for Mobile Viewports */}
-        <div className="mobile-tabs-toggle" role="tablist">
-          <button
-            className={`mobile-tab-btn ${mobileTab === 'canvas' ? 'active' : ''}`}
-            onClick={() => setMobileTab('canvas')}
-            role="tab"
-            aria-selected={mobileTab === 'canvas'}
-          >
-            Canvas
-          </button>
-          <button
-            className={`mobile-tab-btn ${mobileTab === 'code' ? 'active' : ''}`}
-            onClick={() => setMobileTab('code')}
-            role="tab"
-            aria-selected={mobileTab === 'code'}
-          >
-            Code
-          </button>
-        </div>
 
         <div className="top-actions">
           <span className="save-indicator">
@@ -890,20 +870,6 @@ export default function Editor() {
               <button className="anim-btn cancel" onClick={cancelRecording}>Cancel</button>
               <button className="anim-btn confirm" onClick={commitRecording}>Save ✓</button>
             </section>
-
-            {/* ── Sequence / Timeline panel ── */}
-            <SequencePanel
-              open={seqOpen}
-              onClose={() => { setSeqOpen(false); setPaths([...paths]); }}
-              animatedItems={animatedItems}
-              totalDuration={totalDuration()}
-              playingPreview={playingPreview}
-              onPreviewAll={previewAll}
-              onSchedule={scheduleAll}
-              onUpdateAnim={updateAnim}
-              onRemove={removeAnimation}
-              onExport={downloadHtml}
-            />
           </div>
 
           {/* Status bar */}
@@ -962,10 +928,77 @@ export default function Editor() {
         </aside>
       </main>
 
+      {/* ── Mobile Bottom Navigation Tab Bar ── */}
+      <nav className="mobile-nav-tabs" role="tablist">
+        <button
+          className={`mobile-tab-item ${mobileTab === 'draw' ? 'active' : ''}`}
+          onClick={() => { setMobileTab('draw'); setSelectedIndex(-1); }}
+          role="tab"
+          aria-selected={mobileTab === 'draw'}
+        >
+          <span className="tab-icon">✏️</span>
+          <span className="tab-text">Draw</span>
+        </button>
+        <button
+          className={`mobile-tab-item ${mobileTab === 'animate' ? 'active' : ''}`}
+          onClick={() => {
+            setMobileTab('animate');
+            setTool('select');
+            if (selectedIndex < 0 && paths.length > 0) {
+              setSelectedIndex(0); // auto-select first path for convenience
+            }
+          }}
+          role="tab"
+          aria-selected={mobileTab === 'animate'}
+        >
+          <span className="tab-icon">🎬</span>
+          <span className="tab-text">Animate</span>
+        </button>
+        <button
+          className={`mobile-tab-item ${mobileTab === 'timeline' ? 'active' : ''}`}
+          onClick={() => {
+            setMobileTab('timeline');
+            setSeqOpen(true);
+          }}
+          role="tab"
+          aria-selected={mobileTab === 'timeline'}
+        >
+          <span className="tab-icon">📊</span>
+          <span className="tab-text">Timeline</span>
+        </button>
+        <button
+          className={`mobile-tab-item ${mobileTab === 'code' ? 'active' : ''}`}
+          onClick={() => setMobileTab('code')}
+          role="tab"
+          aria-selected={mobileTab === 'code'}
+        >
+          <span className="tab-icon">💻</span>
+          <span className="tab-text">Code</span>
+        </button>
+      </nav>
+
+      {/* ── Sequence / Timeline panel (extricated from stage to render independently) ── */}
+      <SequencePanel
+        open={seqOpen || mobileTab === 'timeline'}
+        onClose={() => {
+          setSeqOpen(false);
+          if (mobileTab === 'timeline') setMobileTab('draw');
+          setPaths([...paths]);
+        }}
+        animatedItems={animatedItems}
+        totalDuration={totalDuration()}
+        playingPreview={playingPreview}
+        onPreviewAll={previewAll}
+        onSchedule={scheduleAll}
+        onUpdateAnim={updateAnim}
+        onRemove={removeAnimation}
+        onExport={downloadHtml}
+      />
+
       {/* Toast */}
       <div className={`toast ${toast?.visible ? 'show' : ''}`} role="status" aria-live="polite">
         {toast?.message}
       </div>
-    </>
+    </div>
   );
 }
