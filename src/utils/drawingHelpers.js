@@ -493,15 +493,37 @@ function smilAnimate(item) {
   return `<animate attributeName="d" dur="${dur}" begin="${begin}" repeatCount="${repeat}" fill="${fill}" calcMode="linear" keyTimes="${keyTimes}" values="${values}"/>`;
 }
 
+export function estimatePathLength(points) {
+  if (!points || points.length < 2) return 0;
+  let len = 0;
+  for (let i = 1; i < points.length; i++) {
+    const dx = points[i].x - points[i - 1].x;
+    const dy = points[i].y - points[i - 1].y;
+    len += Math.hypot(dx, dy);
+  }
+  return Math.round(len);
+}
+
 function pathMarkup(item) {
   const fillAttr = item.closed && item.fill ? item.fillColor : 'none';
-  // Always start the path at the first recorded keyframe (origin position)
-  const pts = item.animation?.keyframes?.[0] || item.points;
-  const hasAnim = item.animation?.keyframes?.length > 1;
+  const isDrawIn = item.animation?.type === 'draw-in';
+  const hasMotion = item.animation?.keyframes?.length > 1;
 
+  if (isDrawIn) {
+    const L = estimatePathLength(item.points);
+    const dur = `${item.animation.duration}s`;
+    const begin = `${Math.max(0, item.animation.start || 0)}s`;
+    const repeat = item.animation.loop ? 'indefinite' : '1';
+    const fill = item.animation.loop ? 'remove' : 'freeze';
+
+    const attrs = `d="${pathData(item.points, item.closed)}" fill="${fillAttr}" stroke="${item.color}" stroke-width="${item.width}" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="${L}" stroke-dashoffset="${L}"`;
+    return `  <path ${attrs}>\n    <animate attributeName="stroke-dashoffset" dur="${dur}" begin="${begin}" repeatCount="${repeat}" fill="${fill}" calcMode="linear" values="${L};0" keyTimes="0;1"/>\n  </path>`;
+  }
+
+  const pts = item.animation?.keyframes?.[0] || item.points;
   const attrs = `d="${pathData(pts, item.closed)}" fill="${fillAttr}" stroke="${item.color}" stroke-width="${item.width}" stroke-linecap="round" stroke-linejoin="round"`;
 
-  if (!hasAnim) {
+  if (!hasMotion) {
     return `  <path ${attrs}/>`;
   }
 

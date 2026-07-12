@@ -560,12 +560,12 @@ export default function Editor() {
   const getAnimated = () =>
     paths
       .map((item, index) => ({ item, index }))
-      .filter(e => e.item.animation?.keyframes?.length > 1)
+      .filter(e => e.item.animation && (e.item.animation.type === 'draw-in' || e.item.animation.keyframes?.length > 1))
       .sort((a, b) => (a.item.animation.start || 0) - (b.item.animation.start || 0));
 
   const totalDuration = () =>
     paths.reduce((end, item) => {
-      if (!item.animation?.keyframes?.length || item.animation.keyframes.length < 2) return end;
+      if (!item.animation) return end;
       return Math.max(end, (item.animation.start || 0) + item.animation.duration);
     }, 0);
 
@@ -585,11 +585,33 @@ export default function Editor() {
         if (!el) return;
         const anim = item.animation;
         const local = elapsed < anim.start ? 0 : Math.min(1, (elapsed - anim.start) / anim.duration);
-        const pts = pointsAtProgress(item, local);
-        el.setAttribute('d', pathData(pts, item.closed));
+
+        if (anim.type === 'draw-in') {
+          // Animate drawing path stroke-dashoffset
+          try {
+            const L = el.getTotalLength() || 1000;
+            el.setAttribute('stroke-dasharray', L);
+            el.setAttribute('stroke-dashoffset', L * (1 - local));
+          } catch {}
+        } else {
+          // Animate motion path points
+          const pts = pointsAtProgress(item, local);
+          el.setAttribute('d', pathData(pts, item.closed));
+        }
       });
       if (now - t0 < total) rafRef.current = requestAnimationFrame(tick);
-      else { setPlayingPreview(false); setPaths([...paths]); }
+      else {
+        // Stop preview: Clean up attributes and reset state
+        setPlayingPreview(false);
+        entries.forEach(({ item, index }) => {
+          const el = artworkRef.current?.querySelector(`[data-index="${index}"]`);
+          if (el) {
+            el.removeAttribute('stroke-dasharray');
+            el.removeAttribute('stroke-dashoffset');
+          }
+        });
+        setPaths([...paths]);
+      }
     };
     rafRef.current = requestAnimationFrame(tick);
   };
@@ -611,11 +633,11 @@ export default function Editor() {
 
   // Schedule: play all together (start=0), or stagger one after another
   const scheduleAll = (mode) => {
-    const animated = paths.filter(item => item.animation?.keyframes?.length > 1);
+    const animated = paths.filter(item => item.animation);
     if (!animated.length) return;
     if (mode === 'together') {
       setPaths(paths.map(item =>
-        item.animation?.keyframes?.length > 1
+        item.animation
           ? { ...item, animation: { ...item.animation, start: 0 } }
           : item
       ));
@@ -623,7 +645,7 @@ export default function Editor() {
       // stagger: chain one after another in draw order
       let cursor = 0;
       const next = paths.map(item => {
-        if (!item.animation?.keyframes?.length || item.animation.keyframes.length < 2) return item;
+        if (!item.animation) return item;
         const updated = { ...item, animation: { ...item.animation, start: cursor } };
         cursor += item.animation.duration;
         return updated;
@@ -645,6 +667,32 @@ export default function Editor() {
       fillColor,
     });
     showToast(`Inserted ${type.replaceAll('_', ' ')}`);
+  };
+
+  const addDrawInAnimation = () => {
+    if (selectedIndex < 0 || !paths[selectedIndex]) return;
+
+    // Compute start offset after existing animations
+    const prevEnd = paths.reduce((end, item) => {
+      if (!item.animation) return end;
+      return Math.max(end, (item.animation.start || 0) + item.animation.duration);
+    }, 0);
+
+    const next = paths.map((item, i) => {
+      if (i !== selectedIndex) return item;
+      return {
+        ...item,
+        // Ensure no leftover motion animations
+        animation: {
+          type: 'draw-in',
+          duration: Math.max(0.2, animDuration),
+          loop: animLoop,
+          start: prevEnd,
+        },
+      };
+    });
+    setPaths(next);
+    showToast('Added Draw-In animation! ✏️');
   };
 
   const downloadHtml = () => {
@@ -816,9 +864,17 @@ export default function Editor() {
                 className="btn btn-sm"
                 style={{ background: '#705aef', border: 'none', color: 'white', fontWeight: 800 }}
                 onClick={() => applyTransform('animate')}
-                title="Record animation"
+                title="Record motion keyframes"
               >
-                {icons.anim} Animate
+                {icons.anim} Motion
+              </button>
+              <button
+                className="btn btn-sm"
+                style={{ background: '#ff5c35', border: 'none', color: 'white', fontWeight: 800 }}
+                onClick={addDrawInAnimation}
+                title="Self-drawing stroke animation"
+              >
+                ✍️ Draw-In
               </button>
               <button className="btn-icon danger" onClick={() => applyTransform('delete')} title="Delete (Del)">{icons.trash}</button>
             </div>
