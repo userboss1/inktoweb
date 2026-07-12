@@ -254,6 +254,7 @@ export default function Editor() {
   const [playingPreview, setPlayingPreview] = useState(false);
   const [seqOpen, setSeqOpen] = useState(false);
   const [coordText, setCoordText] = useState('x 0 / y 0');
+  const [mobileTab, setMobileTab] = useState('canvas'); // 'canvas' | 'code'
 
   // ── Pointer events ──────────────────────────────────────────────────────────
   const onPointerDown = useCallback((e) => {
@@ -651,8 +652,29 @@ export default function Editor() {
       <header className="topbar">
         <a className="brand" href="#" aria-label="InkToWeb">
           <span className="brand-mark">↝</span>
-          <span>InkToWeb</span>
+          <span className="brand-title-text">InkToWeb</span>
         </a>
+
+        {/* Segmented Tab Toggler for Mobile Viewports */}
+        <div className="mobile-tabs-toggle" role="tablist">
+          <button
+            className={`mobile-tab-btn ${mobileTab === 'canvas' ? 'active' : ''}`}
+            onClick={() => setMobileTab('canvas')}
+            role="tab"
+            aria-selected={mobileTab === 'canvas'}
+          >
+            Canvas
+          </button>
+          <button
+            className={`mobile-tab-btn ${mobileTab === 'code' ? 'active' : ''}`}
+            onClick={() => setMobileTab('code')}
+            role="tab"
+            aria-selected={mobileTab === 'code'}
+          >
+            Code
+          </button>
+        </div>
+
         <div className="top-actions">
           <span className="save-indicator">
             <span className="save-indicator-dot" />
@@ -672,7 +694,7 @@ export default function Editor() {
         </div>
       </header>
 
-      <main className="workspace">
+      <main className={`workspace show-${mobileTab}`}>
         {/* ── Tool sidebar ── */}
         <aside className="tools" aria-label="Drawing tools">
           {[

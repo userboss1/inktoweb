@@ -1312,23 +1312,232 @@ code { display: block; }
 }
 
 /* ── Responsive ──────────────────────────────────────────────── */
+
+/* Mobile view toggle (hidden on desktop) */
+.mobile-tabs-toggle {
+  display: none;
+}
+
 @media (max-width: 960px) {
-  .workspace { grid-template-columns: 60px 1fr; }
+  .workspace {
+    grid-template-columns: 60px 1fr;
+  }
   .code-panel {
     position: fixed;
     z-index: 5;
     right: 0;
     bottom: 0;
-    width: 44vw;
+    width: 40vw;
     height: calc(100vh - 56px);
     box-shadow: -8px 0 30px rgba(0,0,0,.15);
   }
 }
-@media (max-width: 680px) {
-  .workspace { grid-template-columns: 52px 1fr; }
-  .tools { padding-inline: 4px; }
-  .tool-btn { width: 44px; min-height: 44px; }
-  .code-panel { width: 100%; height: 40vh; }
-  .stage-panel { padding-bottom: 40vh; }
-  .save-indicator, .btn-ghost { display: none; }
+
+@media (max-width: 768px) {
+  /* Header spacing and logo contraction */
+  .topbar {
+    padding: 0 12px;
+    gap: 8px;
+  }
+  .brand-title-text {
+    display: none; /* Only show the mark ↝ on mobile to preserve screen width */
+  }
+  .save-indicator, 
+  .topbar .btn-ghost {
+    display: none !important; /* Hide less critical desktop options */
+  }
+
+  /* Segmented tab toggle styling */
+  .mobile-tabs-toggle {
+    display: flex;
+    background: #e5e0d6;
+    border-radius: 8px;
+    padding: 2px;
+    gap: 2px;
+    margin: 0 auto 0 8px;
+  }
+  .mobile-tab-btn {
+    border: 0;
+    background: transparent;
+    padding: 6px 12px;
+    font-size: 11px;
+    font-weight: 700;
+    border-radius: 6px;
+    color: var(--muted);
+    transition: all .1s ease;
+    cursor: pointer;
+  }
+  .mobile-tab-btn.active {
+    background: white;
+    color: var(--ink);
+    box-shadow: 0 1px 3px rgba(0,0,0,.1);
+  }
+
+  /* Tab-based workspace swapping */
+  .workspace {
+    display: flex !important;
+    flex-direction: column !important;
+    height: calc(100vh - 56px) !important;
+    grid-template-columns: none !important;
+  }
+
+  /* Toggle views: Canvas mode vs Code mode */
+  .workspace.show-canvas .code-panel {
+    display: none !important;
+  }
+  .workspace.show-code .tools,
+  .workspace.show-code .stage-panel {
+    display: none !important;
+  }
+  .workspace.show-code .code-panel {
+    display: grid !important;
+    width: 100% !important;
+    position: relative !important;
+    height: 100% !important;
+    left: auto !important;
+    top: auto !important;
+    box-shadow: none !important;
+  }
+
+  /* Tools layout: sit as a horizontal bar at the bottom in canvas mode */
+  .workspace.show-canvas .tools {
+    order: 2 !important;
+    flex-direction: row !important;
+    width: 100% !important;
+    height: 58px !important;
+    padding: 6px 12px !important;
+    border-right: 0 !important;
+    border-top: 1px solid var(--line) !important;
+    justify-content: space-around !important;
+    align-items: center !important;
+    background: var(--panel) !important;
+  }
+  .workspace.show-canvas .tools .tool-btn {
+    flex: 1 !important;
+    max-width: 60px !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    padding: 2px !important;
+    border-radius: 8px !important;
+  }
+  .workspace.show-canvas .tools .tool-divider {
+    width: 1px !important;
+    height: 24px !important;
+    margin: 0 8px !important;
+  }
+
+  /* Stage layout: fills remaining space above the tool-bar */
+  .stage-panel {
+    flex: 1 !important;
+    order: 1 !important;
+    display: grid !important;
+    grid-template-rows: auto 1fr 28px !important;
+    height: auto !important;
+    padding-bottom: 0 !important;
+  }
+
+  /* Control bar: horizontal scrolling */
+  .controlbar {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding: 0 8px !important;
+    gap: 4px !important;
+    height: 48px !important;
+  }
+  .ctrl-group {
+    padding: 0 8px !important;
+    gap: 6px !important;
+  }
+  .zoom-group {
+    padding: 0 8px !important;
+    margin-left: 0 !important;
+  }
+
+  /* Selection Actions bar inside Control bar */
+  .selection-bar {
+    padding: 0 8px !important;
+    gap: 4px !important;
+  }
+  .selection-bar-label {
+    display: none; /* Hide label to save space */
+  }
+
+  /* Full screen sheet timeline modal on mobile */
+  .tl-panel {
+    width: 100% !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    transform: translateX(0) translateY(100%) !important;
+    border-radius: 0 !important;
+    border: 0 !important;
+    transition: transform .25s cubic-bezier(.4,0,.2,1) !important;
+  }
+  .tl-panel--open {
+    transform: translateX(0) translateY(0) !important;
+  }
+  .tl-head {
+    padding: 10px 14px !important;
+  }
+  .tl-head-badge,
+  .tl-head-total {
+    display: none !important; /* Hide header details to fit timeline buttons */
+  }
+  .tl-head-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .tl-track {
+    min-height: 48px !important;
+  }
+  .tl-track-label {
+    width: 100px !important;
+    padding: 0 8px !important;
+  }
+  .tl-track-kf {
+    display: none !important; /* Hide keyframe counts on mobile */
+  }
+  .tl-track-controls {
+    width: auto !important;
+    padding: 0 8px !important;
+    gap: 4px !important;
+  }
+  .tl-field {
+    gap: 2px !important;
+  }
+  .tl-field input[type="number"] {
+    width: 36px !important;
+  }
+  .tl-field--check span {
+    display: none; /* Hide 'Loop' text to save space */
+  }
+
+  /* Bottom sheet recording bar on mobile */
+  .anim-panel {
+    width: 100% !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    transform: translateX(0) translateY(100%) !important;
+    border-radius: 0 !important;
+    border-left: 0 !important;
+    border-right: 0 !important;
+    border-bottom: 0 !important;
+    padding: 8px 12px !important;
+    gap: 6px !important;
+    box-shadow: 0 -8px 30px rgba(0,0,0,.35) !important;
+    transition: transform .25s cubic-bezier(.4,0,.2,1) !important;
+  }
+  .anim-panel.visible {
+    transform: translateX(0) translateY(0) !important;
+  }
+  .anim-info {
+    display: none; /* Hide texts on mobile to make space for controls */
+  }
+  .anim-timeline {
+    height: 18px !important;
+  }
 }
+
